@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vue和react响应式原理</title>
+</head>
+<body>
+    姓名：<span id="spanName"></span>
+    <input id="inpName" type="text" />
+</body>
+    <script>
+        
+        function vue2(){
+            let obj = {
+                name:''
+            };
+            let newObj = JSON.parse(JSON.stringify(obj))
+            Object.defineProperty(obj,'name',{ //https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty
+                get(){
+                    return newObj.name 
+                },
+                set(val){
+                    if(val===newObj.name) return;
+                    newObj.name = val
+                    observe();
+                }
+            })
+           
+            observe();
+            setTimeout(_=>{
+                obj.name='测试'
+            },1000)
+            inpName.oninput =function(){ //v-model
+                obj.name = this.value
+            }
+            function observe(){
+                spanName.innerHTML = obj.name
+                inpName.value = obj.name
+            }
+            // 1.对原始数据克隆
+            // 2.Object.defineProperty 需要分别给每个属性设置监听
+            /*   
+            data(){
+                    return{
+                        obj:{}
+                    }
+                }
+                this.obj.name="XXX" 
+                需要通过$.set() //强制更新 
+            */
+        }
+       
+            // vue2()
+        function vue3(){
+                let obj = {name:''};
+                obj = new Proxy(obj,{//不需要设置属性，对所有属性监听
+                    get(target,prop){
+                        console.log('A')
+                        return target[prop];
+                    },
+                    set(target,prop,value){
+                        console.log('B')
+                        target[prop] = value
+                        observe()
+                    }
+                })
+                setTimeout(_=>{
+                    obj.name='测试'
+                },1000)
+                function observe(){
+                    spanName.innerHTML = obj.name
+                    inpName.value = obj.name
+                }
+                inpName.oninput =function(){ //v-model
+                    obj.name = this.value
+                }
+                observe()
+        }
+        vue3()
+    </script>
+</html>
