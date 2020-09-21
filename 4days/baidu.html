@@ -21,14 +21,10 @@
 <body>
     <div class="searchBar">
         <input id="inpName" type="text" /><button id="search">search</button>
-        <ul id="sugList">
-            <!-- <li><a href="https://www.baidu.com/s?wd=${json.s[i]}" target="_blank" >${json.s[i]}</a></li> -->
-        </ul>
+        <ul id="sugList"></ul>
     </div>
     <div>
-        <ul id="resultList">
-            <!-- <li></li> -->
-        </ul>
+        <ul id="resultList"></ul>
     </div>
 </body>
 <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.10.0/axios.min.js"></script>
@@ -66,7 +62,7 @@ server {
             observe()
         }
     })
-    // let url = `http://www.baidu.com/s?wd=kacoro&pn=0&rn=50&tn=json&cl=1` //百度搜索json结果 会产生跨域
+    // let url = `http://www.baidu.com/s?wd=kacoro&pn=0&rn=50&tn=json&cl=3` //百度搜索json结果 会产生跨域
     function debounce(fun, delay=300) {
         return function (args) {
             //获取函数的作用域和变量
@@ -115,11 +111,13 @@ server {
 
     async function myfetch() {
         axios.defaults.headers.post['Content-Type'] = 'application/json';
-        // axios.defaults.withCredentials=true
+        axios.defaults.withCredentials=true
         // axios.defaults.crossDomain=true
         if (obj.name.trim() == '') return false;
         console.log(obj.name.trim())
-        let res = await axios.get('/baiduApi/s?wd=' + obj.name + '&pn=1&rn=50&tn=json&cl=4&si=kacoro.com&timestamp=' + new Date().getTime())
+        let res2 = await axios.get('/baiduApi/s?wd=' + obj.name + '&cl=3&json=1&timestamp=' + new Date().getTime())
+        
+        let res = await axios.get('/baiduApi/s?wd=' + obj.name + '&pn=1&rn=50&tn=json&cl=3&si=kacoro.com&timestamp=' + new Date().getTime())
         console.log(res)
         if (res && res.data && res.data.feed) {
             let entry = res.data.feed.entry
@@ -128,7 +126,17 @@ server {
             for (var i = 0; i < entry.length - 1; i++) {
                 let { title, url, abs, time } = entry[i]
                 // console.log(title,url,entry[i])
-                resultList.innerHTML += `<li ><a href="${url}" title="${url}" target="_blank">${title}</a>` + new Date(time * 1000).toLocaleDateString() + `<br/> <span>${url}</span><small><small/><p>${abs}</p></li>`
+                let reg = new RegExp(""+obj.name+"","gim")
+                let  title2 = title.replace(reg,(content)=>{
+                //=>content:每一次正则匹配的结果
+                return `<span style="color:red">${content}</span>`
+                })
+                abs = abs.replace(reg,(content)=>{
+                //=>content:每一次正则匹配的结果
+                return `<span style="color:red">${content}</span>`
+                })
+               
+                resultList.innerHTML += `<li ><a href="${url}" title="${url}" target="_blank">${title2}</a>` + new Date(time * 1000).toLocaleDateString() + `<br/> <span>${url}</span><small><small/><p>${abs}</p></li>`
             }
         }
     }
